@@ -1,0 +1,14 @@
+{
+  "name": "lumi-books",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloud-ready book reading site with accounts, admin-only book management, and Apple-inspired UI.",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

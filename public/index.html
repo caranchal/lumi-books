@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Lumi Books: сайт для чтения книг с полными версиями, подборками, учетными записями и админским добавлением книг."
+    />
+    <title>Lumi Books</title>
+    <link rel="stylesheet" href="/styles.css?v=2" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <button class="brand" id="brandButton" type="button" aria-label="Lumi Books">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>Lumi Books</span>
+        </button>
+
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true"></span>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Поиск по библиотеке"
+            autocomplete="off"
+          />
+        </div>
+
+        <nav class="nav-actions" aria-label="Главная навигация">
+          <button class="icon-button" id="libraryButton" type="button" title="Библиотека" aria-label="Библиотека">
+            <span aria-hidden="true">⌂</span>
+          </button>
+          <button class="icon-button hidden" id="adminButton" type="button" title="Админка" aria-label="Админка">
+            <span aria-hidden="true">＋</span>
+          </button>
+          <button class="icon-button" id="themeButton" type="button" title="Тема" aria-label="Тема">
+            <span aria-hidden="true">◐</span>
+          </button>
+          <div class="account-area" id="accountArea"></div>
+        </nav>
+      </header>
+
+      <main id="app" class="app" tabindex="-1"></main>
+    </div>
+
+    <div class="modal-layer hidden" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <div class="modal-backdrop" data-close-auth></div>
+      <section class="modal-card" aria-describedby="authMessage">
+        <button class="icon-button close-button" type="button" data-close-auth title="Закрыть" aria-label="Закрыть">
+          <span aria-hidden="true">×</span>
+        </button>
+        <h2 id="authTitle">Вход</h2>
+        <p id="authMessage" class="modal-message"></p>
+        <form id="authForm" class="auth-form"></form>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js?v=2" type="module"></script>
+  </body>
+</html>

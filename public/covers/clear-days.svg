@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Атлас ясных дней</title>
+  <desc id="desc">Обложка с картой дней, линиями и светлым горизонтом.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffd0d8"/>
+      <stop offset="0.48" stop-color="#ff5b7c"/>
+      <stop offset="1" stop-color="#37213a"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.82"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.34"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="1000" rx="44" fill="url(#bg)"/>
+  <path d="M0 682c92-46 178-51 259-14 112 51 213 46 303-14 55-37 105-50 158-38v384H0z" fill="#1b1d33" opacity="0.7"/>
+  <rect x="104" y="126" width="512" height="442" rx="34" fill="url(#paper)" stroke="#fff" stroke-opacity="0.42" stroke-width="3"/>
+  <path d="M166 218h388M166 304h388M166 390h388M242 164v356M362 164v356M482 164v356" stroke="#793b66" stroke-opacity="0.18" stroke-width="6"/>
+  <circle cx="242" cy="304" r="22" fill="#fff8c8"/>
+  <circle cx="362" cy="218" r="22" fill="#cbfff3"/>
+  <circle cx="482" cy="390" r="22" fill="#fff"/>
+  <path d="M242 304C291 247 323 229 362 218c49-14 83 28 120 172" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <path d="M122 610c116-36 212-33 288 8 78 42 146 45 204 8" fill="none" stroke="#fff" stroke-opacity="0.38" stroke-width="8" stroke-linecap="round"/>
+  <text x="68" y="778" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="800">Атлас</text>
+  <text x="68" y="842" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="800">ясных дней</text>
+  <text x="72" y="914" fill="#ffe3eb" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="600">Lumi Editorial</text>
+</svg>

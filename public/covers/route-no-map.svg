@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Маршрут без карты</title>
+  <desc id="desc">Обложка с поездом, дорогой и северным пейзажем.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#bff4d2"/>
+      <stop offset="0.52" stop-color="#389a68"/>
+      <stop offset="1" stop-color="#17352b"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="1000" rx="44" fill="url(#bg)"/>
+  <path d="M0 608c113-64 216-75 310-33 151 68 274 58 410-33v458H0z" fill="#0c251f" opacity="0.88"/>
+  <path d="M210 1000 354 404 505 1000" fill="#111d20" opacity="0.55"/>
+  <path d="M278 1000 356 414 438 1000" fill="none" stroke="url(#rail)" stroke-width="10"/>
+  <path d="M204 802h310M233 680h250M257 574h200M282 488h149" stroke="#edf9ef" stroke-opacity="0.5" stroke-width="8" stroke-linecap="round"/>
+  <rect x="202" y="198" width="318" height="188" rx="28" fill="#10211f" opacity="0.78"/>
+  <rect x="242" y="236" width="72" height="72" rx="11" fill="#d7fff0"/>
+  <rect x="336" y="236" width="72" height="72" rx="11" fill="#d7fff0" opacity="0.78"/>
+  <rect x="430" y="236" width="52" height="72" rx="11" fill="#d7fff0" opacity="0.58"/>
+  <circle cx="266" cy="381" r="18" fill="#142e2b"/>
+  <circle cx="457" cy="381" r="18" fill="#142e2b"/>
+  <path d="M78 178c84-36 150-31 199 15 41 38 84 43 129 17 56-33 116-22 180 33" fill="none" stroke="#ecfff6" stroke-opacity="0.56" stroke-width="7" stroke-linecap="round"/>
+  <text x="70" y="772" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800">Маршрут</text>
+  <text x="70" y="836" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800">без карты</text>
+  <text x="74" y="910" fill="#d8fff0" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="600">Lumi Editorial</text>
+</svg>
