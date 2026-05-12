@@ -384,7 +384,7 @@ function findReadableStart(lines) {
     const hasRealText = segment.some(
       (line) => !isChapterHeading(line) && !isSeparatorLine(line) && line.length > 35
     );
-    if (hasRealText || segment.length >= 5) return start;
+    if (hasRealText) return start;
   }
 
   return 0;
@@ -562,6 +562,17 @@ function renderReader() {
   const pages = paginateChapters(chapters);
   state.readerPage = Math.min(Math.max(state.readerPage, 0), pages.length - 1);
   const page = pages[state.readerPage];
+  const currentChapterPage = pages.findIndex(
+    (candidate) => candidate.chapterIndex === page.chapterIndex
+  );
+  const previousChapterPage =
+    page.chapterIndex > 0
+      ? pages.findIndex((candidate) => candidate.chapterIndex === page.chapterIndex - 1)
+      : -1;
+  const nextChapterPage =
+    page.chapterIndex < chapters.length - 1
+      ? pages.findIndex((candidate) => candidate.chapterIndex === page.chapterIndex + 1)
+      : -1;
   const chapterButtons = chapters
     .map((chapter, index) => {
       const firstPage = pages.findIndex((candidate) => candidate.chapterIndex === index);
@@ -586,12 +597,16 @@ function renderReader() {
             <span>${state.readerPage + 1} / ${pages.length}</span>
             <button class="icon-button" type="button" data-page-next title="Следующая страница" aria-label="Следующая страница" ${state.readerPage >= pages.length - 1 ? "disabled" : ""}>›</button>
           </div>
+          <div class="chapter-jump-actions">
+            <button class="text-button ghost" type="button" data-reader-page="${previousChapterPage}" ${previousChapterPage < 0 ? "disabled" : ""}>Пред. глава</button>
+            <button class="text-button ghost" type="button" data-reader-page="${nextChapterPage}" ${nextChapterPage < 0 ? "disabled" : ""}>След. глава</button>
+          </div>
           <div class="tool-row">
             <button class="icon-button" type="button" data-font="down" title="Меньше текст" aria-label="Меньше текст">A-</button>
             <button class="icon-button" type="button" data-font="up" title="Больше текст" aria-label="Больше текст">A+</button>
           </div>
           <div class="tool-row">
-            <span class="muted">${book.stats.pages} стр.</span>
+            <span class="muted">${pages.length} стр.</span>
             <span class="muted">${book.stats.minutes} мин</span>
           </div>
           <div class="reader-progress" aria-hidden="true"><span></span></div>
@@ -604,7 +619,7 @@ function renderReader() {
         <p class="reader-summary">${esc(book.summary)}</p>
         <div class="page-meta">
           <span>${esc(page.chapterTitle)}</span>
-          <span>Страница ${state.readerPage + 1}</span>
+          <span>Страница ${state.readerPage + 1} · глава с ${currentChapterPage + 1}</span>
         </div>
         <div class="reader-content reader-page">${renderReaderBlocks(page.blocks)}</div>
         <div class="reader-footer">
@@ -645,11 +660,117 @@ function renderReader() {
 }
 
 function looksLikeMojibake(text) {
-  return /Р[°-я]|С[°-я]|Ð|Ñ/.test(text.slice(0, 3000));
+  return mojibakeScore(text) > 0 || /Ð|Ñ/.test(text.slice(0, 3000));
+}
+
+const cp1251SpecialChars = [
+  "\u0402",
+  "\u0403",
+  "\u201a",
+  "\u0453",
+  "\u201e",
+  "\u2026",
+  "\u2020",
+  "\u2021",
+  "\u20ac",
+  "\u2030",
+  "\u0409",
+  "\u2039",
+  "\u040a",
+  "\u040c",
+  "\u040b",
+  "\u040f",
+  "\u0452",
+  "\u2018",
+  "\u2019",
+  "\u201c",
+  "\u201d",
+  "\u2022",
+  "\u2013",
+  "\u2014",
+  null,
+  "\u2122",
+  "\u0459",
+  "\u203a",
+  "\u045a",
+  "\u045c",
+  "\u045b",
+  "\u045f",
+  "\u00a0",
+  "\u040e",
+  "\u045e",
+  "\u0408",
+  "\u00a4",
+  "\u0490",
+  "\u00a6",
+  "\u00a7",
+  "\u0401",
+  "\u00a9",
+  "\u0404",
+  "\u00ab",
+  "\u00ac",
+  "\u00ad",
+  "\u00ae",
+  "\u0407",
+  "\u00b0",
+  "\u00b1",
+  "\u0406",
+  "\u0456",
+  "\u0491",
+  "\u00b5",
+  "\u00b6",
+  "\u00b7",
+  "\u0451",
+  "\u2116",
+  "\u0454",
+  "\u00bb",
+  "\u0458",
+  "\u0405",
+  "\u0455",
+  "\u0457"
+];
+
+const cp1251SpecialBytes = new Map(
+  cp1251SpecialChars
+    .map((char, index) => (char ? [char, index + 0x80] : null))
+    .filter(Boolean)
+);
+
+function cp1251ByteForChar(char) {
+  const code = char.charCodeAt(0);
+  if (code <= 0x7f) return code;
+  if (code >= 0x0410 && code <= 0x044f) return code - 0x0410 + 0xc0;
+  return cp1251SpecialBytes.get(char);
+}
+
+function mojibakeScore(value) {
+  return (
+    String(value || "")
+      .slice(0, 12000)
+      .match(
+        /(?:\u0420[\u0402-\u040f\u0452-\u045f\u201a-\u2026\u2030-\u203a\u20ac\u2122\u00a0-\u00bf\u0490\u0491]|\u0421[\u0402-\u040f\u0452-\u045f\u201a-\u2026\u2030-\u203a\u20ac\u2122\u00a0-\u00bf\u0490\u0491]|\u0412[\u00ab\u00bb]|\u0432[\u0402\u20ac])/g
+      ) || []
+  ).length;
+}
+
+function repairMojibake(text) {
+  const source = String(text || "");
+  const sourceScore = mojibakeScore(source);
+  if (sourceScore < 3) return source;
+
+  const bytes = [];
+  for (const char of source) {
+    const byte = cp1251ByteForChar(char);
+    if (byte === undefined) return source;
+    bytes.push(byte);
+  }
+
+  const repaired = new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+  return mojibakeScore(repaired) < sourceScore ? repaired : source;
 }
 
 function normalizeImportedBookText(text) {
-  return normalizeBookText(text)
+  return normalizeBookText(repairMojibake(text))
     .replace(/\n[ \t]*\n[ \t]*\n/g, "\n\n")
     .replace(/^\s*Annotation\s*\n+/i, "")
     .trim();
@@ -657,13 +778,15 @@ function normalizeImportedBookText(text) {
 
 async function decodeTextFile(file) {
   const buffer = await file.arrayBuffer();
-  const utf8 = new TextDecoder("utf-8").decode(buffer);
-  if (!looksLikeMojibake(utf8)) return utf8;
+  let utf8 = "";
   try {
-    return new TextDecoder("windows-1251").decode(buffer);
+    utf8 = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
   } catch {
-    return utf8;
+    return new TextDecoder("windows-1251").decode(buffer);
   }
+  if (!looksLikeMojibake(utf8)) return utf8;
+  const cp1251 = new TextDecoder("windows-1251").decode(buffer);
+  return mojibakeScore(cp1251) < mojibakeScore(utf8) ? cp1251 : utf8;
 }
 
 async function importBookFile(event) {

@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const publicDir = path.join(rootDir, "public");
 
-const port = Number(process.env.PORT || 3002);
+const port = Number(process.env.PORT || 3003);
 const dataDir = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.join(rootDir, "data");
@@ -280,6 +280,105 @@ function cleanText(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+const cp1251Special = new Map(
+  [
+    "\u0402",
+    "\u0403",
+    "\u201A",
+    "\u0453",
+    "\u201E",
+    "\u2026",
+    "\u2020",
+    "\u2021",
+    "\u20AC",
+    "\u2030",
+    "\u0409",
+    "\u2039",
+    "\u040A",
+    "\u040C",
+    "\u040B",
+    "\u040F",
+    "\u0452",
+    "\u2018",
+    "\u2019",
+    "\u201C",
+    "\u201D",
+    "\u2022",
+    "\u2013",
+    "\u2014",
+    "",
+    "\u2122",
+    "\u0459",
+    "\u203A",
+    "\u045A",
+    "\u045C",
+    "\u045B",
+    "\u045F",
+    "\u00A0",
+    "\u040E",
+    "\u045E",
+    "\u0408",
+    "\u00A4",
+    "\u0490",
+    "\u00A6",
+    "\u00A7",
+    "\u0401",
+    "\u00A9",
+    "\u0404",
+    "\u00AB",
+    "\u00AC",
+    "\u00AD",
+    "\u00AE",
+    "\u0407",
+    "\u00B0",
+    "\u00B1",
+    "\u0406",
+    "\u0456",
+    "\u0491",
+    "\u00B5",
+    "\u00B6",
+    "\u00B7",
+    "\u0451",
+    "\u2116",
+    "\u0454",
+    "\u00BB",
+    "\u0458",
+    "\u0405",
+    "\u0455",
+    "\u0457"
+  ]
+    .map((char, index) => (char ? [char, index + 0x80] : null))
+    .filter(Boolean)
+);
+
+function cp1251ByteForChar(char) {
+  const code = char.charCodeAt(0);
+  if (code <= 0x7f) return code;
+  if (code >= 0x0410 && code <= 0x044f) return code - 0x0410 + 0xc0;
+  return cp1251Special.get(char);
+}
+
+function mojibakeScore(value) {
+  return (
+    String(value || "").match(
+      /(Р[А-Яа-яЁёЇїІіЄєҐґЎў]|С[А-Яа-яЁёЇїІіЄєҐґЎў]|В[«»]|вЂ)/g
+    ) || []
+  ).length;
+}
+
+function repairMojibake(value) {
+  const text = String(value || "");
+  if (mojibakeScore(text) < 6) return text;
+  const bytes = [];
+  for (const char of text) {
+    const byte = cp1251ByteForChar(char);
+    if (byte === undefined) return text;
+    bytes.push(byte);
+  }
+  const repaired = Buffer.from(bytes).toString("utf8");
+  return mojibakeScore(repaired) < mojibakeScore(text) ? repaired : text;
+}
+
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -397,11 +496,11 @@ function requireAdmin(req, res) {
 }
 
 function normalizeBookInput(body) {
-  const title = cleanText(body.title, 120);
-  const author = cleanText(body.author, 120);
-  const category = cleanText(body.category || "Без категории", 60);
-  const summary = cleanText(body.summary, 280);
-  const content = cleanText(body.content, 2000000);
+  const title = cleanText(repairMojibake(body.title), 120);
+  const author = cleanText(repairMojibake(body.author), 120);
+  const category = cleanText(repairMojibake(body.category || "Без категории"), 60);
+  const summary = cleanText(repairMojibake(body.summary), 280);
+  const content = cleanText(repairMojibake(body.content), 2000000);
   const coverUrl = cleanText(body.coverUrl, 500);
   const accent = cleanText(body.accent || "#0a84ff", 20);
 
