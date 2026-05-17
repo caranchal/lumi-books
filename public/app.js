@@ -17,6 +17,7 @@ const state = {
   collections: [],
   activeBook: null,
   readerPage: 0,
+  isTurningPage: false,
   view: "library",
   category: "Все",
   collectionId: null,
@@ -29,13 +30,13 @@ const state = {
 };
 
 const accentOptions = [
-  "#0a84ff",
-  "#30d158",
-  "#ff9f0a",
-  "#ff375f",
-  "#64d2ff",
-  "#bf5af2",
-  "#8e8e93"
+  "#1f5f97",
+  "#8bbad8",
+  "#203f62",
+  "#7a4e2f",
+  "#b88752",
+  "#d9bf95",
+  "#5f7690"
 ];
 
 function esc(value) {
@@ -49,6 +50,22 @@ function esc(value) {
     };
     return map[char];
   });
+}
+
+function withPageTransition(update, type = "soft") {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!document.startViewTransition || prefersReducedMotion) {
+    update();
+    return Promise.resolve();
+  }
+
+  document.documentElement.dataset.pageTransition = type;
+  const transition = document.startViewTransition(update);
+  return transition.finished
+    .catch(() => {})
+    .finally(() => {
+      delete document.documentElement.dataset.pageTransition;
+    });
 }
 
 function applyTheme() {
@@ -172,7 +189,7 @@ function filteredBooks() {
 }
 
 function bookCover(book, className = "") {
-  const safeAccent = /^#[0-9a-f]{6}$/i.test(book.accent) ? book.accent : "#0a84ff";
+  const safeAccent = /^#[0-9a-f]{6}$/i.test(book.accent) ? book.accent : "#1f5f97";
   const image = book.coverUrl
     ? `<img src="${esc(book.coverUrl)}" alt="Обложка ${esc(book.title)}" loading="lazy" />`
     : `<span class="cover-title">${esc(book.title)}</span>`;
@@ -180,7 +197,7 @@ function bookCover(book, className = "") {
 }
 
 function miniCover(book) {
-  const safeAccent = /^#[0-9a-f]{6}$/i.test(book?.accent) ? book.accent : "#0a84ff";
+  const safeAccent = /^#[0-9a-f]{6}$/i.test(book?.accent) ? book.accent : "#1f5f97";
   const image = book?.coverUrl
     ? `<img src="${esc(book.coverUrl)}" alt="" loading="lazy" />`
     : `<span>${esc(book?.title || "")}</span>`;
@@ -227,6 +244,7 @@ function renderCollections() {
 }
 
 function renderLibrary() {
+  document.body.dataset.view = "library";
   const books = filteredBooks();
   const collection = activeCollection();
   const totalMinutes = state.books.reduce((sum, book) => sum + book.stats.minutes, 0);
@@ -312,11 +330,11 @@ function renderLibrary() {
   });
 
   app.querySelectorAll("[data-book-id]").forEach((button) => {
-    button.addEventListener("click", () => openBook(button.dataset.bookId));
+    button.addEventListener("click", () => openBook(button.dataset.bookId, button));
   });
 }
 
-async function openBook(id) {
+async function openBook(id, trigger) {
   if (!state.user) {
     state.pendingBookId = id;
     openAuth("login");
@@ -324,14 +342,19 @@ async function openBook(id) {
   }
 
   try {
+    trigger?.classList.add("is-opening");
     const payload = await api(`/api/books/${encodeURIComponent(id)}`);
-    state.activeBook = payload.book;
-    state.readerPage = 0;
-    state.view = "reader";
-    render();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    await withPageTransition(() => {
+      state.activeBook = payload.book;
+      state.readerPage = 0;
+      state.view = "reader";
+      render();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }, "book-open");
   } catch (error) {
     showToast(error.message);
+  } finally {
+    trigger?.classList.remove("is-opening");
   }
 }
 
@@ -482,7 +505,7 @@ function buildBookChapters(content) {
 
 function readerPageLimit() {
   const width = window.innerWidth || 1024;
-  const base = width < 620 ? 1150 : width < 980 ? 1450 : 1800;
+  const base = width < 620 ? 1350 : width < 980 ? 1850 : 2450;
   return Math.round(base / state.fontScale);
 }
 
@@ -544,13 +567,30 @@ function renderReaderBlocks(blocks) {
     .join("");
 }
 
-function setReaderPage(nextPage, pages) {
-  state.readerPage = Math.min(Math.max(nextPage, 0), pages.length - 1);
-  renderReader();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+async function setReaderPage(nextPage, pages) {
+  const nextReaderPage = Math.min(Math.max(nextPage, 0), pages.length - 1);
+  if (nextReaderPage === state.readerPage || state.isTurningPage) return;
+
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+
+  const transitionType = nextReaderPage > state.readerPage ? "page-next" : "page-prev";
+  state.isTurningPage = true;
+
+  try {
+    await withPageTransition(() => {
+      state.readerPage = nextReaderPage;
+      renderReader();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }, transitionType);
+  } finally {
+    state.isTurningPage = false;
+  }
 }
 
 function renderReader() {
+  document.body.dataset.view = "reader";
   const book = state.activeBook;
   if (!book) {
     state.view = "library";
@@ -818,6 +858,7 @@ async function importBookFile(event) {
 }
 
 function renderAdmin() {
+  document.body.dataset.view = "admin";
   if (state.user?.role !== "admin") {
     app.innerHTML = `
       <section class="empty-state">
@@ -1045,11 +1086,13 @@ async function submitAuth(event) {
 }
 
 function showLibrary() {
-  state.view = "library";
-  state.activeBook = null;
-  state.editingId = null;
-  render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  withPageTransition(() => {
+    state.view = "library";
+    state.activeBook = null;
+    state.editingId = null;
+    render();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, "soft-close");
 }
 
 function showAdmin() {

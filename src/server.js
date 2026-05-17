@@ -687,7 +687,11 @@ async function serveStatic(req, res, url) {
       "application/octet-stream";
     res.writeHead(200, {
       "Content-Type": contentType,
-      "Cache-Control": contentType.startsWith("text/html")
+      "Cache-Control": (
+        contentType.startsWith("text/html") ||
+        contentType.startsWith("text/css") ||
+        contentType.startsWith("application/javascript")
+      )
         ? "no-store"
         : "public, max-age=3600"
     });
