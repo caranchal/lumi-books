@@ -1,3 +1,5 @@
+import { publicDomainBooks, publicDomainCollections } from "./public-domain-books.js";
+
 export const seedBooks = [
   {
     id: "seed-quiet-garden",
@@ -209,6 +211,9 @@ export const seedCollections = [
     bookKeys: ["route-no-map", "rain-city"]
   }
 ];
+
+seedBooks.push(...publicDomainBooks);
+seedCollections.push(...publicDomainCollections);
 
 const bookExtensions = {
   "quiet-garden": [

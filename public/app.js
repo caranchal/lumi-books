@@ -19,12 +19,14 @@ const state = {
   readerPage: 0,
   isTurningPage: false,
   view: "library",
+  activeAuthor: null,
   category: "Все",
   collectionId: null,
   search: "",
   authMode: "login",
   pendingBookId: null,
   editingId: null,
+  editingBook: null,
   theme: localStorage.getItem("lumi-theme") || "light",
   fontScale: Number(localStorage.getItem("lumi-font-scale") || "1")
 };
@@ -38,6 +40,62 @@ const accentOptions = [
   "#d9bf95",
   "#5f7690"
 ];
+
+const authorDescriptions = {
+  "Александр Пушкин":
+    "Главный поэт русской литературы, который соединил ясность языка, живой сюжет и точную психологию. В библиотеке его удобно читать как вход в русскую классику: от романтической прозы до исторических тем.",
+  "А. С. Пушкин":
+    "Главный поэт русской литературы, который соединил ясность языка, живой сюжет и точную психологию. В библиотеке его удобно читать как вход в русскую классику: от романтической прозы до исторических тем.",
+  "Михаил Лермонтов":
+    "Поэт и прозаик напряженного внутреннего конфликта, одиночества и свободы. Его тексты звучат резко и музыкально, а герои часто стоят на границе между личной гордостью и судьбой.",
+  "Николай Гоголь":
+    "Мастер гротеска, сатиры и тревожной фантастики в повседневном мире. У Гоголя смешное быстро становится странным, а бытовая деталь открывает драму маленького человека.",
+  "Иван Тургенев":
+    "Писатель тонких наблюдений, мягкой лирики и точного социального чувства. Его проза часто держится на сочувствии, природе и тихом столкновении характера с обстоятельствами.",
+  "Лев Толстой":
+    "Классик нравственного выбора, психологической глубины и больших человеческих вопросов. Даже в короткой прозе Толстой показывает, как одно событие меняет взгляд человека на жизнь.",
+  "Антон Чехов":
+    "Писатель пауз, подтекста и живой человеческой неловкости. Его рассказы не торопятся объяснять героев, но точно передают момент, когда обычная жизнь становится внутренним открытием.",
+  "Lumi Editorial":
+    "Редакционная полка Lumi Books с авторскими подборками, заметками и демонстрационными материалами для чтения внутри проекта."
+};
+
+const authorBiographies = {
+  "Александр Пушкин": [
+    "Александр Сергеевич Пушкин родился в 1799 году в Москве и рано оказался в среде, где литература, французская культура и русская история были частью повседневной жизни. Учеба в Царскосельском лицее дала ему круг друзей, свободу литературного эксперимента и первые серьезные публикации.",
+    "Пушкин стал фигурой, вокруг которой сформировался современный русский литературный язык. В его творчестве соединяются легкость стиха, точность прозы, историческое воображение и живой разговорный тон, поэтому его тексты читаются не как музейная классика, а как очень ясная и подвижная речь.",
+    "Его жизнь была тесно связана с эпохой после Отечественной войны 1812 года, с идеями свободы, ссылками, цензурой и постоянным поиском личной независимости. Пушкин погиб в 1837 году после дуэли, но успел оставить корпус произведений, который стал основой русской классической традиции."
+  ],
+  "Михаил Лермонтов": [
+    "Михаил Юрьевич Лермонтов родился в 1814 году в Москве и вырос в атмосфере семейных конфликтов, ранней потери матери и строгого воспитания у бабушки. Эти переживания часто связывают с его темами одиночества, внутренней гордости и болезненного чувства несвободы.",
+    "Лермонтов вошел в литературу как поэт поколения после Пушкина, но быстро выработал собственный голос: резкий, музыкальный, драматичный. Его герои ищут абсолютной свободы и одновременно не могут выйти из круга судьбы, общества и собственного характера.",
+    "За стихотворение на смерть Пушкина Лермонтов был отправлен на Кавказ, и кавказская тема стала одной из центральных в его творчестве. Он погиб в 1841 году на дуэли в Пятигорске, прожив всего двадцать шесть лет, но успел стать одним из главных авторов русского романтизма."
+  ],
+  "Николай Гоголь": [
+    "Николай Васильевич Гоголь родился в 1809 году в Полтавской губернии, в украинской дворянской семье. Ранние впечатления от местного быта, народных историй и театральной культуры позже превратились в яркую смесь фантастики, юмора и тревожной прозы.",
+    "Гоголь сделал смешное способом говорить о самом болезненном: чиновничьей пустоте, страхе маленького человека, духовной растерянности и странности повседневной жизни. Его Петербург часто выглядит реальным и призрачным одновременно, а бытовая деталь легко превращается в символ.",
+    "Последние годы Гоголя были связаны с религиозными поисками, сомнениями в собственном даре и тяжелым внутренним кризисом. Он умер в 1852 году, оставив произведения, которые сильно повлияли на Достоевского, Салтыкова-Щедрина, Булгакова и всю русскую сатирическую традицию."
+  ],
+  "Иван Тургенев": [
+    "Иван Сергеевич Тургенев родился в 1818 году в Орловской губернии, в дворянской семье. Детство в Спасском-Лутовинове, наблюдение за крепостной жизнью и сложные отношения с властной матерью стали важным опытом для его будущей прозы.",
+    "Тургенев получил европейское образование, много жил за границей и стал одним из главных русских писателей, которых хорошо знали в Европе. Его стиль отличается мягкой точностью, вниманием к природе, психологической сдержанностью и умением показывать социальные перемены через частную судьбу.",
+    "В его произведениях часто сталкиваются разные поколения, взгляды и типы характера. Тургенев умер во Франции в 1883 году, но его проза осталась одной из самых ясных дорог к пониманию русской жизни XIX века."
+  ],
+  "Лев Толстой": [
+    "Лев Николаевич Толстой родился в 1828 году в Ясной Поляне, в дворянской семье. Рано потеряв родителей, он много размышлял о воспитании, семье, долге и смысле жизни, а позже превратил эти вопросы в центральные темы своего творчества.",
+    "Толстой служил на Кавказе и участвовал в Крымской войне, что дало ему опыт прямого столкновения с насилием, страхом и моральным выбором. Его проза известна редкой психологической точностью: он показывает не только поступок, но и движение мысли, сомнение, самообман и пробуждение совести.",
+    "Во второй половине жизни Толстой пережил духовный кризис, пересмотрел отношение к собственности, церкви, государству и насилию. Он умер в 1910 году на станции Астапово, оставив огромную литературную и нравственную традицию, которая до сих пор вызывает споры."
+  ],
+  "Антон Чехов": [
+    "Антон Павлович Чехов родился в 1860 году в Таганроге, в семье купца. Он рано узнал и труд, и семейную ответственность: после разорения отца Чехов помогал близким, учился на врача и одновременно писал короткие юмористические тексты для журналов.",
+    "Медицинское образование сильно повлияло на его взгляд на человека: Чехов редко судит героев напрямую, он наблюдает за ними точно, спокойно и внимательно. В его рассказах важны паузы, недосказанность, бытовые детали и момент, когда человек внезапно понимает что-то о себе.",
+    "Чехов много занимался благотворительностью, лечил людей, участвовал в переписи на Сахалине и писал о жизни без громких эффектов, но с огромной внутренней силой. Он умер в 1904 году, став одним из главных мастеров рассказа и драматургии XX века."
+  ],
+  "Lumi Editorial": [
+    "Lumi Editorial — внутренняя редакционная полка проекта, где собраны демонстрационные материалы, подборки и тексты для проверки интерфейса. Эти записи помогают тестировать карточки книг, ридер, статистику и навигацию без привязки к одному классическому автору.",
+    "Такая полка нужна как рабочий инструмент: на ней удобно проверять разные длины текста, обложки, категории и сценарии чтения. В реальном каталоге этот раздел можно заменить редакционными заметками, подборками команды или авторскими рекомендациями."
+  ]
+};
 
 function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => {
@@ -159,6 +217,7 @@ function renderAccount() {
       await api("/api/auth/logout", { method: "POST" });
       state.user = null;
       state.activeBook = null;
+      state.activeAuthor = null;
       state.view = "library";
       render();
       showToast("Вы вышли из учетной записи");
@@ -202,6 +261,208 @@ function miniCover(book) {
     ? `<img src="${esc(book.coverUrl)}" alt="" loading="lazy" />`
     : `<span>${esc(book?.title || "")}</span>`;
   return `<span class="mini-cover" style="--cover-accent:${safeAccent}">${image}</span>`;
+}
+
+function authorProfileName(name) {
+  return name === "А. С. Пушкин" ? "Александр Пушкин" : name;
+}
+
+function authorDescription(author) {
+  const name = typeof author === "string" ? author : author.name;
+  const profileName = authorProfileName(name);
+  if (authorDescriptions[profileName]) return authorDescriptions[profileName];
+
+  const books = Array.isArray(author.books) ? author.books : [];
+  const categories = Array.isArray(author.categories) ? author.categories : [];
+  const categoryText = categories.length ? categories.join(", ") : "разных жанрах";
+  const worksText = books
+    .slice(0, 2)
+    .map((book) => `«${book.title}»`)
+    .join(" и ");
+
+  if (worksText) {
+    return `${name} представлен в библиотеке в разделе ${categoryText}. Начните с ${worksText}, чтобы познакомиться с авторским стилем и основными темами.`;
+  }
+
+  return `${name} представлен в библиотеке отдельной авторской полкой. Здесь собраны произведения, которые можно открыть и читать без перехода в другие разделы.`;
+}
+
+function authorBiography(author) {
+  const name = typeof author === "string" ? author : author.name;
+  const profileName = authorProfileName(name);
+  if (authorBiographies[profileName]) return authorBiographies[profileName];
+
+  return [
+    authorDescription(author),
+    "Биографический блок можно расширить после добавления новых сведений об авторе. Пока здесь показана краткая справка, связанная с произведениями, которые уже есть в библиотеке."
+  ];
+}
+
+function authorShortDescription(author) {
+  const description = author.description || authorDescription(author);
+  return description.length > 132 ? `${description.slice(0, 129).trimEnd()}...` : description;
+}
+
+function authorSummaries() {
+  const byAuthor = new Map();
+
+  state.books.forEach((book) => {
+    const name = book.author?.trim() || "Без автора";
+    const summary =
+      byAuthor.get(name) ||
+      {
+        name,
+        books: [],
+        bookIds: new Set(),
+        categories: new Set(),
+        totalPages: 0,
+        totalMinutes: 0
+      };
+
+    summary.books.push(book);
+    summary.bookIds.add(book.id);
+    if (book.category) summary.categories.add(book.category);
+    summary.totalPages += Number(book.stats?.pages || 0);
+    summary.totalMinutes += Number(book.stats?.minutes || 0);
+    byAuthor.set(name, summary);
+  });
+
+  return [...byAuthor.values()]
+    .map((summary) => {
+      const collectionIds = state.collections
+        .filter((collection) => collection.bookIds.some((id) => summary.bookIds.has(id)))
+        .map((collection) => collection.id);
+
+      const author = {
+        ...summary,
+        books: [...summary.books].sort((left, right) => left.title.localeCompare(right.title, "ru")),
+        categories: [...summary.categories].sort((left, right) => left.localeCompare(right, "ru")),
+        collectionIds
+      };
+
+      return {
+        ...author,
+        description: authorDescription(author)
+      };
+    })
+    .sort((left, right) => {
+      const leftClassic = left.categories.includes("Русская классика") ? 1 : 0;
+      const rightClassic = right.categories.includes("Русская классика") ? 1 : 0;
+      return (
+        rightClassic - leftClassic ||
+        right.books.length - left.books.length ||
+        right.totalMinutes - left.totalMinutes ||
+        left.name.localeCompare(right.name, "ru")
+      );
+    });
+}
+
+function getAuthorSummary(authorName) {
+  return authorSummaries().find((author) => author.name === authorName);
+}
+
+function libraryAuthorRecommendations(limit = 8) {
+  return authorSummaries().slice(0, limit);
+}
+
+function recommendedAuthors(authorName, limit = 4) {
+  const current = getAuthorSummary(authorName);
+  if (!current) return libraryAuthorRecommendations(limit);
+
+  const currentCategories = new Set(current.categories);
+  const currentCollections = new Set(current.collectionIds);
+
+  return authorSummaries()
+    .filter((author) => author.name !== current.name)
+    .map((author) => {
+      const categoryScore = author.categories.filter((category) => currentCategories.has(category)).length * 6;
+      const collectionScore = author.collectionIds.filter((id) => currentCollections.has(id)).length * 4;
+      const classicScore =
+        author.categories.includes("Русская классика") && currentCategories.has("Русская классика") ? 4 : 0;
+      const volumeScore = Math.min(author.books.length, 4);
+      return {
+        ...author,
+        score: categoryScore + collectionScore + classicScore + volumeScore
+      };
+    })
+    .sort((left, right) => {
+      return (
+        right.score - left.score ||
+        right.books.length - left.books.length ||
+        right.totalMinutes - left.totalMinutes ||
+        left.name.localeCompare(right.name, "ru")
+      );
+    })
+    .slice(0, limit);
+}
+
+function renderBookCards(books) {
+  return books
+    .map(
+      (book) => `
+        <button class="book-card" type="button" data-book-id="${esc(book.id)}" aria-label="Открыть ${esc(book.title)}">
+          ${bookCover(book)}
+          <span class="book-meta">
+            <span class="book-category">${esc(book.category)}</span>
+            <h3>${esc(book.title)}</h3>
+            <p class="book-author">${esc(book.author)}</p>
+            <p class="book-summary">${esc(book.summary)}</p>
+            <span class="book-facts">
+              <span>${book.stats.pages} стр.</span>
+              <span class="dot" aria-hidden="true"></span>
+              <span>${book.stats.minutes} мин</span>
+            </span>
+          </span>
+        </button>
+      `
+    )
+    .join("");
+}
+
+function renderAuthorCard(author, className = "") {
+  const covers = author.books.slice(0, 3).map((book) => miniCover(book)).join("");
+  const categoryText = author.categories.slice(0, 2).join(" · ") || "Книги автора";
+  const description = authorShortDescription(author);
+  return `
+    <button class="author-card ${className}" type="button" data-author="${esc(author.name)}" aria-label="Открыть автора ${esc(author.name)}">
+      <span class="author-covers">${covers}</span>
+      <span class="author-copy">
+        <strong>${esc(author.name)}</strong>
+        <span>${esc(categoryText)}</span>
+        <p class="author-description">${esc(description)}</p>
+        <small>${author.books.length} произв. · ${author.totalMinutes} мин</small>
+      </span>
+    </button>
+  `;
+}
+
+function renderAuthorsSection() {
+  const authors = libraryAuthorRecommendations();
+  if (!authors.length) return "";
+
+  return `
+    <section class="author-section" aria-label="Рекомендации по авторам">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Авторы</p>
+          <h2>Рекомендации по авторам</h2>
+        </div>
+      </div>
+      <div class="author-grid">${authors.map((author) => renderAuthorCard(author)).join("")}</div>
+    </section>
+  `;
+}
+
+function bindBookOpeners(root = app) {
+  root.querySelectorAll("[data-book-id]").forEach((button) => {
+    button.addEventListener("click", () => openBook(button.dataset.bookId, button));
+  });
+}
+
+function bindAuthorOpeners(root = app) {
+  root.querySelectorAll("[data-author]").forEach((button) => {
+    button.addEventListener("click", () => openAuthor(button.dataset.author));
+  });
 }
 
 function renderCollections() {
@@ -258,26 +519,7 @@ function renderLibrary() {
     )
     .join("");
 
-  const cards = books
-    .map(
-      (book) => `
-        <button class="book-card" type="button" data-book-id="${esc(book.id)}" aria-label="Открыть ${esc(book.title)}">
-          ${bookCover(book)}
-          <span class="book-meta">
-            <span class="book-category">${esc(book.category)}</span>
-            <h3>${esc(book.title)}</h3>
-            <p class="book-author">${esc(book.author)}</p>
-            <p class="book-summary">${esc(book.summary)}</p>
-            <span class="book-facts">
-              <span>${book.stats.pages} стр.</span>
-              <span class="dot" aria-hidden="true"></span>
-              <span>${book.stats.minutes} мин</span>
-            </span>
-          </span>
-        </button>
-      `
-    )
-    .join("");
+  const cards = renderBookCards(books);
 
   app.innerHTML = `
     <section class="library-head glass-hero">
@@ -295,6 +537,7 @@ function renderLibrary() {
       </div>
     </section>
     ${renderCollections()}
+    ${renderAuthorsSection()}
     ${
       collection
         ? `<div class="active-collection-bar"><span>${esc(collection.title)}</span><p>${esc(collection.description)}</p></div>`
@@ -329,9 +572,108 @@ function renderLibrary() {
     renderLibrary();
   });
 
-  app.querySelectorAll("[data-book-id]").forEach((button) => {
-    button.addEventListener("click", () => openBook(button.dataset.bookId, button));
+  bindAuthorOpeners();
+  bindBookOpeners();
+}
+
+function openAuthor(authorName) {
+  if (!authorName) return;
+  withPageTransition(() => {
+    state.activeAuthor = authorName;
+    state.activeBook = null;
+    state.editingId = null;
+    state.editingBook = null;
+    state.search = "";
+    state.view = "author";
+    render();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, "soft");
+}
+
+function renderAuthorPage() {
+  document.body.dataset.view = "author";
+  const author = getAuthorSummary(state.activeAuthor);
+  if (!author) {
+    state.activeAuthor = null;
+    state.view = "library";
+    renderLibrary();
+    return;
+  }
+
+  const query = state.search.trim().toLowerCase();
+  const authorBooks = author.books.filter((book) => {
+    const haystack = `${book.title} ${book.summary} ${book.category}`.toLowerCase();
+    return !query || haystack.includes(query);
   });
+  const recommendations = recommendedAuthors(author.name);
+  const categoryText = author.categories.join(" · ") || "Авторская полка";
+  const description = author.description || authorDescription(author);
+  const biography = authorBiography(author);
+  const cards = renderBookCards(authorBooks);
+  const recommendationCards = recommendations.map((item) => renderAuthorCard(item)).join("");
+
+  app.innerHTML = `
+    <section class="author-page">
+      <section class="author-hero glass-hero">
+        <div class="author-hero-copy">
+          <button class="text-button ghost" type="button" data-back-library>← Библиотека</button>
+          <p class="eyebrow">Автор</p>
+          <h1>${esc(author.name)}</h1>
+          <p class="subcopy">${esc(categoryText)}</p>
+          <p class="author-description-large">${esc(description)}</p>
+        </div>
+        <div class="author-stats" aria-label="Статистика автора">
+          <div class="stat"><strong>${author.books.length}</strong><span>произведений</span></div>
+          <div class="stat"><strong>${author.totalPages}</strong><span>страниц</span></div>
+          <div class="stat"><strong>${author.totalMinutes}</strong><span>мин чтения</span></div>
+        </div>
+      </section>
+
+      <section class="author-bio" aria-label="Биография автора">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Биография</p>
+            <h2>Жизнь и творчество</h2>
+          </div>
+        </div>
+        <div class="author-bio-text">
+          ${biography.map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")}
+        </div>
+      </section>
+
+      <section class="author-books" aria-label="Произведения автора">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Книги</p>
+            <h2>Произведения автора</h2>
+          </div>
+        </div>
+        ${
+          cards
+            ? `<div class="book-grid">${cards}</div>`
+            : `<section class="empty-state"><div><h2>Книги не найдены</h2><p>Измените поиск, чтобы увидеть произведения этого автора.</p></div></section>`
+        }
+      </section>
+
+      ${
+        recommendationCards
+          ? `<section class="author-section" aria-label="Похожие авторы">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">Авторы</p>
+                  <h2>Похожие авторы</h2>
+                </div>
+              </div>
+              <div class="author-grid">${recommendationCards}</div>
+            </section>`
+          : ""
+      }
+    </section>
+  `;
+
+  app.querySelector("[data-back-library]")?.addEventListener("click", showLibrary);
+  bindAuthorOpeners();
+  bindBookOpeners();
 }
 
 async function openBook(id, trigger) {
@@ -871,7 +1213,10 @@ function renderAdmin() {
     return;
   }
 
-  const editingBook = state.books.find((book) => book.id === state.editingId);
+  const listedEditingBook = state.books.find((book) => book.id === state.editingId);
+  const editingBook = state.editingBook?.id === state.editingId
+    ? state.editingBook
+    : listedEditingBook;
   const accent = editingBook?.accent || accentOptions[0];
   const list = state.books
     .map(
@@ -957,21 +1302,30 @@ function renderAdmin() {
   app.querySelector("[data-library]").addEventListener("click", showLibrary);
   app.querySelector("[data-cancel-edit]")?.addEventListener("click", () => {
     state.editingId = null;
+    state.editingBook = null;
     renderAdmin();
   });
 
   app.querySelector("#bookForm").addEventListener("submit", saveBook);
   app.querySelector("#bookTxtFile")?.addEventListener("change", importBookFile);
   app.querySelectorAll("[data-edit]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.editingId = button.dataset.edit;
-      renderAdmin();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+    button.addEventListener("click", () => editBook(button.dataset.edit));
   });
   app.querySelectorAll("[data-delete]").forEach((button) => {
     button.addEventListener("click", () => deleteBook(button.dataset.delete));
   });
+}
+
+async function editBook(id) {
+  try {
+    const payload = await api(`/api/books/${encodeURIComponent(id)}`);
+    state.editingId = id;
+    state.editingBook = payload.book;
+    renderAdmin();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
 async function saveBook(event) {
@@ -995,6 +1349,7 @@ async function saveBook(event) {
     await api(path, { method, body: JSON.stringify(body) });
     await Promise.all([loadBooks(), loadCollections()]);
     state.editingId = null;
+    state.editingBook = null;
     renderAdmin();
     showToast(method === "POST" ? "Книга добавлена" : "Книга сохранена");
   } catch (error) {
@@ -1009,7 +1364,10 @@ async function deleteBook(id) {
   try {
     await api(`/api/books/${encodeURIComponent(id)}`, { method: "DELETE" });
     await Promise.all([loadBooks(), loadCollections()]);
-    if (state.editingId === id) state.editingId = null;
+    if (state.editingId === id) {
+      state.editingId = null;
+      state.editingBook = null;
+    }
     renderAdmin();
     showToast("Книга удалена");
   } catch (error) {
@@ -1089,7 +1447,9 @@ function showLibrary() {
   withPageTransition(() => {
     state.view = "library";
     state.activeBook = null;
+    state.activeAuthor = null;
     state.editingId = null;
+    state.editingBook = null;
     render();
     window.scrollTo({ top: 0, behavior: "auto" });
   }, "soft-close");
@@ -1098,6 +1458,7 @@ function showLibrary() {
 function showAdmin() {
   state.view = "admin";
   state.activeBook = null;
+  state.activeAuthor = null;
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1106,6 +1467,7 @@ function render() {
   renderAccount();
   searchInput.value = state.search;
   if (state.view === "reader") renderReader();
+  else if (state.view === "author") renderAuthorPage();
   else if (state.view === "admin") renderAdmin();
   else renderLibrary();
 }
@@ -1121,8 +1483,11 @@ themeButton.addEventListener("click", () => {
 
 searchInput.addEventListener("input", (event) => {
   state.search = event.target.value;
-  if (state.view !== "library") state.view = "library";
-  renderLibrary();
+  if (state.view !== "library" && state.view !== "author") {
+    state.view = "library";
+    state.activeAuthor = null;
+  }
+  render();
 });
 
 authForm.addEventListener("submit", submitAuth);
